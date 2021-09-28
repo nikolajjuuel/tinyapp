@@ -3,9 +3,12 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const { application } = require("express");
+const cookieParser = require('cookie-parser')
+
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
+app.use(cookieParser())
 
 
 function generateRandomString() {
@@ -85,6 +88,15 @@ app.get("/", (req, res) => {
     res.redirect('/urls');
   })
 
+  app.post("/login", (req, res)=>{
+    console.log(req.params);
+    const username = (req.body.name);
+    //console.log('un',username)
+    res.cookie('name', username);
+    
+
+    res.send('logged In');
+  })
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

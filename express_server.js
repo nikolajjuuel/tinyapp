@@ -38,6 +38,22 @@ app.get("/", (req, res) => {
     res.json(urlDatabase);
   });
 
+  app.post("/urls", (req, res) => {
+    console.log(req.body);  // Log the POST request body to the console
+    res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  });
+
+  function generateRandomString() {
+    const options ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const urlShort = [];
+      for (let i = 0; i < 6; i++){
+        const random = Math.floor(Math.random() * options.length + 1);
+        urlShort.push(options[random])
+      }
+     return urlShort.join('');
+    }
+
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

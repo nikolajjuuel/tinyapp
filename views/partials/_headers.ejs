@@ -8,6 +8,8 @@
         <div class="navbar-nav">
           <a class="nav-item nav-link" href="/urls">My URLs</a>
           <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+          <a class="nav-item nav-link" href="/register">Register</a>
+
         </div>
       </div>
       <% if(username) { %>
@@ -17,7 +19,7 @@
         </form>
       <% } else { %>
         <form class="d-flex" action="/login" method="POST"> 
-          <input class="form-control me-2" name="name" type="text" placeholder="Username" aria-label="Search">
+          <input class="form-control me-2" name="name" type="text" placeholder="username" aria-label="Search">
   
           <button class="btn btn-outline-dark" type="submit" style="margin-left: 10px;">Login</button>
         </form>

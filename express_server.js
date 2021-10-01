@@ -66,6 +66,7 @@ app.get("/urls", (req, res) => {
   }
 
   const email = users[id].email;
+
   const templateVars = {
     urls: urlDatabase,
     user_id: email,
@@ -95,8 +96,9 @@ app.get("/urls/:shortURL", (req, res) => {
   if (users[id] === undefined){
     return res.status(401).send("Unauthorized");
   }
+
   const email = users[id].email;
- 
+  
 
   const shortURL = req.params.shortURL;
   const templateVars = {
@@ -137,7 +139,6 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   const inputUrl = req.body.longURL;
   const id = req.session.username;
-  console.log(id);
 
   const randomString = generateRandomString();
   urlDatabase[randomString] = {

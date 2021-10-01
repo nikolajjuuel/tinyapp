@@ -51,14 +51,18 @@ const urlDatabase = {
 
 
 app.get("/", (req, res) => {
-  res.redirect('/urls');
+  const id = req.session.username;
+console.log(id);
+  res.redirect('/login');
 });
 
 app.get("/urls", (req, res) => {
   const id = req.session.username;
 
   if (id === undefined) {
-    res.redirect('/login');
+   // res.redirect('/login');
+    return res.status(401).send("Please Login to view page");
+
   }
 
   const email = users[id].email;
@@ -87,20 +91,34 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   //const id = req.cookies["user_id"];
   const id = req.session.username;
-  console.log(id);
 
+  if (users[id] === undefined){
+    return res.status(401).send("Unauthorized");
+  }
   const email = users[id].email;
+ 
+
   const shortURL = req.params.shortURL;
   const templateVars = {
     shortURL: shortURL, longURL: urlDatabase[shortURL], user_id: email,
   };
-  const owner = urlDatabase[shortURL].userID;
 
+  if(urlDatabase[shortURL] === undefined){
+    return res.status(400).send("Bad Request");
+
+  }
+
+  const owner = urlDatabase[shortURL].userID;
+ 
    if (id !== owner) {
      return res.status(401).send("Unauthorized");
 
    }
-  
+   console.log('tester',urlDatabase[shortURL]);
+
+  console.log('params', req.params.shortURL);
+
+
   console.log(templateVars);
   res.render("urls_show", templateVars);
 });
@@ -119,6 +137,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   const inputUrl = req.body.longURL;
   const id = req.session.username;
+  console.log(id);
 
   const randomString = generateRandomString();
   urlDatabase[randomString] = {
@@ -146,6 +165,10 @@ app.post("/urls/:shortURL/", (req, res) => {
 })
 
 app.get("/login", (req, res) => {
+  const id = req.session.username;
+  if(id !== undefined){
+    res.redirect('/urls');
+  }
   const templateVars = { user_id : req.session.username
   }
   res.render("login", templateVars);
@@ -224,6 +247,11 @@ app.post("/register", (req, res) => {
   req.session.username = user_id;
   res.redirect(`/urls`)
 })
+
+
+app.get('*', function(req, res){
+  return res.status(404).send('page not found')
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

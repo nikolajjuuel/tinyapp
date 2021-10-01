@@ -3,83 +3,58 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const { application } = require("express");
-
 const cookieSession = require('cookie-session')
-//const cookieParser = require('cookie-parser')
-
-
 const bcrypt = require('bcryptjs');
+const {generateRandomString, getUserByEmail} = require('./helpers');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
-//app.use(cookieParser())
-
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }))
 
 
-function generateRandomString() {
-  const options = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const urlShort = [];
-  for (let i = 0; i < 6; i++) {
-    const random = Math.floor(Math.random() * options.length + 1);
-    urlShort.push(options[random])
-  }
-  return urlShort.join('');
-}
 
 const users = {
-  "1": {
-    id: "1",
-    email: "nikolaj.juuel@gmail.com",
-    password: "123"
+  "FGwMh": {
+    id: "FGwMh",
+    email: "example@example.com",
+    password: "$2a$10$NPagxjAAghelEYDAf6crteHHzGZF3ipJCT2VxHqrkU9ISGafhUwdi"
   },
-  "232": {
-    id: "232",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
+  "lw3uLE": {
+    id: "lw3uLE",
+    email: "nikolaj.juuel@gmail.com",
+    password: "$2a$10$5gWQUZokhX1jvYaBlW3EOetqkSB6NobVOdtcnWJJx6/V/ubkXKoyi"
   }
 }
 
 
 const urlDatabase = {
   "b2xVn2": {
-    longURL: "https://www.tsn.ca",
-    userID: "1"
+    longURL: "https://www.facebook.com/",
+    userID: "lw3uLE"
   },
   "hsm5xK": {
-    longURL: "https://www.google.ca",
-    userID: "1"
+    longURL: "https://www.champ-sys.ca/",
+    userID: "lw3uLE"
   },
   "asadsa": {
-    longURL: "https://www.lifford.ca",
-    userID: "1"
+    longURL: "https://www.innovadiscs.com/",
+    userID: "lw3uLE"
   },
   "dsads": {
     longURL: "https://www.matrix.ca",
-    userID: "2"
+    userID: "FGwMh"
   }
 };
 
 
-const findUserByEmail = (email) => {
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      return user
-    }
-  }
-  return null
-}
-
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect('/urls');
 });
 
 app.get("/urls", (req, res) => {
-  //const id = req.cookies["user_id"];
   const id = req.session.username;
 
   if (id === undefined) {
@@ -98,10 +73,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
- // const id = req.cookies["user_id"];
   const id = req.session.username;
-  //console.log('id2',id2);
-  console.log('id',id);
 
   if (id === undefined) {
     res.redirect('/login');
@@ -115,11 +87,20 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   //const id = req.cookies["user_id"];
   const id = req.session.username;
+  console.log(id);
+
   const email = users[id].email;
   const shortURL = req.params.shortURL;
   const templateVars = {
     shortURL: shortURL, longURL: urlDatabase[shortURL], user_id: email,
   };
+  const owner = urlDatabase[shortURL].userID;
+
+   if (id !== owner) {
+     return res.status(401).send("Unauthorized");
+
+   }
+  
   console.log(templateVars);
   res.render("urls_show", templateVars);
 });
@@ -137,7 +118,6 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const inputUrl = req.body.longURL;
-  //const id = req.cookies["user_id"];
   const id = req.session.username;
 
   const randomString = generateRandomString();
@@ -145,6 +125,7 @@ app.post("/urls", (req, res) => {
     longURL: inputUrl,
     userID: id,
   };
+
   console.log(urlDatabase);
   res.redirect(`/urls/${randomString}`)
 });
@@ -166,10 +147,7 @@ app.post("/urls/:shortURL/", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = { user_id : req.session.username
-}
-  email = req.params.email;
-  console.log('params', req.params);
-
+  }
   res.render("login", templateVars);
 })
 
@@ -182,7 +160,7 @@ app.post("/login", (req, res) => {
     return res.status(400).send("email or password cannot be blank");
   }
 
-  const user = findUserByEmail(email);
+  const user = getUserByEmail(email, users);
   console.log(user);
   if (!user) {
     return res.status(400).send('no user with that email was found');
@@ -192,7 +170,6 @@ app.post("/login", (req, res) => {
     return res.status(400).send('password does not match')
   } 
 
-  //res.cookie('user_id', user.id);
   req.session.username = user.id;
 
   res.redirect("/urls");
@@ -209,8 +186,12 @@ app.get("/register", (req, res) => {
   const shortURL = req.params.shortURL;
   const templateVars = {
     shortURL: req.params.shortURL, longURL: urlDatabase[shortURL], user_id: req.session.username
-
   };
+  console.log('req',req.session.username);
+  if(req.session.username){
+    res.redirect('/urls');
+  }
+ 
   res.render("register", templateVars);
 })
 
@@ -222,9 +203,9 @@ app.post("/register", (req, res) => {
 
   if (!email || !password) {
     return res.status(400).send("email or password cannot be blank");
-  }
+  } 
 
-  const user = findUserByEmail(email);
+  const user = getUserByEmail(email, users);
 
   if (user) {
     return res.status(400).send('user with that email currently exists')

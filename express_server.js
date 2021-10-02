@@ -49,17 +49,17 @@ const urlDatabase = {
 
 
 app.get("/", (req, res) => {
-  const id = req.session.username;
-  console.log(id);
   res.redirect('/login');
 });
 
 app.get("/urls", (req, res) => {
+// if no session cookie prompts user to login
   const id = req.session.username;
   if (id === undefined) {
     return res.status(401).send("Please Login to view page");
   }
 
+// sets username === email address
   const email = users[id].email;
   const templateVars = {
     urls: urlDatabase,
@@ -97,6 +97,7 @@ app.get("/urls/:shortURL", (req, res) => {
     return res.status(400).send("Bad Request");
   }
 
+  //checks if user has access to the URL's
   const owner = urlDatabase[shortURL].userID;
   if (id !== owner) {
     return res.status(401).send("Unauthorized");
@@ -111,12 +112,14 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  //Directs short URL to long URL destination
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
+  //creates new short URL with unique ID 
   const inputUrl = req.body.longURL;
   const id = req.session.username;
 
@@ -138,6 +141,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/urls/:shortURL/", (req, res) => {
+  //edit existing short URL to a new destination
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
   urlDatabase[shortURL].longURL = longURL;
@@ -158,6 +162,7 @@ app.get("/login", (req, res) => {
 
 
 app.post("/login", (req, res) => {
+  //authenticates user on login
   const email = req.body.email;
   const password = req.body.password;
   if (!email || !password) {
@@ -169,10 +174,11 @@ app.post("/login", (req, res) => {
     return res.status(400).send('no user with that email was found');
   }
 
+  //compares password to hashed password
   if (!bcrypt.compareSync(password, user.password)) {
     return res.status(400).send('password does not match')
   }
-
+  //adds encrypted login cookie
   req.session.username = user.id;
 
   res.redirect("/urls");
@@ -198,6 +204,7 @@ app.get("/register", (req, res) => {
 
 
 app.post("/register", (req, res) => {
+    //user creation and password hashing 
   const email = req.body.email;
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(req.body.password, 10);
